@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gateway</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <button class="new-chat" id="new-chat">+ New chat</button>
+        <ul class="session-list" id="session-list"></ul>
+      </aside>
+      <main class="chat">
+        <header class="chat-header" id="chat-header">New chat</header>
+        <section class="messages" id="messages"></section>
+        <form class="composer" id="composer">
+          <textarea
+            id="input"
+            rows="2"
+            placeholder="메시지를 입력하세요. (Shift+Enter로 줄바꿈)"
+            autofocus
+          ></textarea>
+          <button type="submit" id="send">Send</button>
+        </form>
+      </main>
+    </div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
