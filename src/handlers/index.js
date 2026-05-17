@@ -1,3 +1,4 @@
+import kbo from './kboBaseball.js';
 import en from './dictionaryEn.js';
 import ko from './dictionaryKo.js';
 import fallback from './fallback.js';
@@ -16,6 +17,7 @@ export function allHandlers() {
   return handlers.values();
 }
 
+register(kbo);
 register(en);
 register(ko);
 register(fallback);
