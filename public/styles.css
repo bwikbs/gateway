@@ -17,6 +17,39 @@ html, body { margin: 0; padding: 0; height: 100%; }
   gap: 8px;
 }
 
+.tabs-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  border-bottom: 1px solid #343541;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: #c5c5d2;
+  font-size: 12px;
+  padding: 8px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  text-align: center;
+}
+
+.tab-btn:hover {
+  background: #2a2b32;
+  color: #fff;
+}
+
+.tab-btn.active {
+  background: #343541;
+  color: #fff;
+  font-weight: 600;
+}
+
 .new-chat {
   padding: 10px;
   background: transparent;
@@ -37,17 +70,54 @@ html, body { margin: 0; padding: 0; height: 100%; }
 }
 
 .session-list li {
+  position: relative;
   padding: 10px 12px;
+  padding-right: 32px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s ease;
 }
 
 .session-list li:hover { background: #2a2b32; }
 .session-list li.active { background: #343541; }
+
+.session-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delete-session-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #9a9b9f;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px;
+  border-radius: 4px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.session-list li:hover .delete-session-btn {
+  display: flex;
+}
+
+.delete-session-btn:hover {
+  color: #ff4d4d;
+  background: rgba(255, 77, 77, 0.15);
+}
 
 .chat {
   flex: 1;

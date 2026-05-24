@@ -11,7 +11,8 @@ const sendBtn = $('#send');
 
 let state = {
   sessions: [],
-  currentSessionId: null
+  currentSessionId: null,
+  activeTab: 'koen'
 };
 
 function escapeHtml(s) {
@@ -54,13 +55,42 @@ function renderSessions() {
   sessionListEl.innerHTML = '';
   for (const s of state.sessions) {
     const li = document.createElement('li');
-    li.textContent = s.title || 'New chat';
-    li.title = s.title || 'New chat';
     li.dataset.id = s.id;
     if (s.id === state.currentSessionId) li.classList.add('active');
-    li.addEventListener('click', () => {
+    
+    li.addEventListener('click', (e) => {
+      if (e.target.closest('.delete-session-btn')) return;
       selectSession(s.id);
     });
+
+    const span = document.createElement('span');
+    span.className = 'session-title';
+    span.textContent = s.title || 'New chat';
+    span.title = s.title || 'New chat';
+    li.appendChild(span);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'delete-session-btn';
+    delBtn.title = '대화 삭제';
+    delBtn.innerHTML = '✕';
+    delBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (confirm('이 대화를 삭제하시겠습니까?')) {
+        try {
+          await api(`/api/sessions/${s.id}`, { method: 'DELETE' });
+          if (state.currentSessionId === s.id) {
+            state.currentSessionId = null;
+            chatHeaderEl.textContent = 'New chat';
+            messagesEl.innerHTML = '';
+          }
+          await loadSessions();
+        } catch (err) {
+          alert('삭제 실패: ' + err.message);
+        }
+      }
+    });
+    li.appendChild(delBtn);
+
     sessionListEl.appendChild(li);
   }
 }
@@ -83,7 +113,8 @@ function appendMessage(m) {
 }
 
 async function loadSessions() {
-  state.sessions = await api('/api/sessions');
+  const url = state.activeTab === 'history' ? '/api/sessions' : `/api/sessions?mode=${state.activeTab}`;
+  state.sessions = await api(url);
   renderSessions();
 }
 
@@ -102,7 +133,11 @@ async function selectSession(id) {
 }
 
 async function createNewSession() {
-  const s = await api('/api/sessions', { method: 'POST' });
+  const mode = state.activeTab === 'history' ? 'general' : state.activeTab;
+  const s = await api('/api/sessions', {
+    method: 'POST',
+    body: JSON.stringify({ mode })
+  });
   state.sessions.unshift(s);
   state.currentSessionId = s.id;
   renderSessions();
@@ -120,12 +155,19 @@ async function sendMessage(text) {
   sendBtn.disabled = true;
   input.disabled = true;
 
+  let modeToSend = state.activeTab;
+  if (state.activeTab === 'history') {
+    const curSession = state.sessions.find(s => s.id === state.currentSessionId);
+    modeToSend = curSession ? curSession.mode : 'general';
+  }
+
   try {
     const resp = await api('/api/chat', {
       method: 'POST',
       body: JSON.stringify({
         sessionId: state.currentSessionId,
-        message: text
+        message: text,
+        mode: modeToSend
       })
     });
 
@@ -181,7 +223,44 @@ newChatBtn.addEventListener('click', () => {
   createNewSession().catch((err) => console.error(err));
 });
 
+function setupTabs() {
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const tab = btn.dataset.tab;
+      state.activeTab = tab;
+      
+      if (tab === 'history') {
+        newChatBtn.style.display = 'none';
+      } else {
+        newChatBtn.style.display = 'block';
+        let tabName = '';
+        if (tab === 'koen') tabName = '한영사전';
+        else if (tab === 'enko') tabName = '영한사전';
+        else if (tab === 'ko') tabName = '국어사전';
+        newChatBtn.textContent = `+ 새 ${tabName} 검색`;
+      }
+      
+      await loadSessions();
+      
+      if (state.sessions.length > 0) {
+        await selectSession(state.sessions[0].id);
+      } else {
+        state.currentSessionId = null;
+        chatHeaderEl.textContent = 'New chat';
+        messagesEl.innerHTML = '';
+      }
+    });
+  });
+}
+
 async function init() {
+  setupTabs();
+  newChatBtn.textContent = '+ 새 한영사전 검색';
+  
   await loadSessions();
   if (state.sessions.length > 0) {
     await selectSession(state.sessions[0].id);
