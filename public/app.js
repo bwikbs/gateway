@@ -8,6 +8,8 @@ const newChatBtn = $('#new-chat');
 const composer = $('#composer');
 const input = $('#input');
 const sendBtn = $('#send');
+const toggleSidebarBtn = $('#toggle-sidebar-btn');
+const sidebarEl = $('.sidebar');
 
 let state = {
   sessions: [],
@@ -257,7 +259,20 @@ function setupTabs() {
   });
 }
 
+function setupSidebar() {
+  const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+  if (isCollapsed) {
+    sidebarEl.classList.add('collapsed');
+  }
+
+  toggleSidebarBtn.addEventListener('click', () => {
+    const collapsed = sidebarEl.classList.toggle('collapsed');
+    localStorage.setItem('sidebar-collapsed', collapsed);
+  });
+}
+
 async function init() {
+  setupSidebar();
   setupTabs();
   newChatBtn.textContent = '+ 새 한영사전 검색';
   

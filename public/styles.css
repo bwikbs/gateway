@@ -15,6 +15,17 @@ html, body { margin: 0; padding: 0; height: 100%; }
   display: flex;
   flex-direction: column;
   gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .tabs-container {
@@ -127,9 +138,35 @@ html, body { margin: 0; padding: 0; height: 100%; }
 }
 
 .chat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 12px 24px;
   border-bottom: 1px solid #e5e5e5;
   font-weight: 600;
+}
+
+.toggle-sidebar-btn {
+  background: transparent;
+  border: none;
+  color: #4f5b66;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.toggle-sidebar-btn:hover {
+  background: #ececf1;
+  color: #111;
+}
+
+.sidebar-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .messages {
