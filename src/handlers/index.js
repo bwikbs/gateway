@@ -1,5 +1,6 @@
 import kbo from './kboBaseball.js';
-import en from './dictionaryEn.js';
+import koen from './dictionaryKoEn.js';
+import enko from './dictionaryEnKo.js';
 import ko from './dictionaryKo.js';
 import fallback from './fallback.js';
 
@@ -18,6 +19,7 @@ export function allHandlers() {
 }
 
 register(kbo);
-register(en);
+register(koen);
+register(enko);
 register(ko);
 register(fallback);

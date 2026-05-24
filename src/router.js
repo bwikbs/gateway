@@ -27,11 +27,13 @@ export function makeRouter(db) {
   };
 
   router.get('/sessions', (req, res) => {
-    res.json(listSessions(db));
+    const mode = typeof req.query.mode === 'string' ? req.query.mode : null;
+    res.json(listSessions(db, mode));
   });
 
   router.post('/sessions', (req, res) => {
-    const session = createSession(db);
+    const mode = typeof req.body.mode === 'string' ? req.body.mode : 'general';
+    const session = createSession(db, mode);
     res.status(201).json(session);
   });
 
@@ -69,10 +71,11 @@ export function makeRouter(db) {
           .json(errorBody('TOO_LONG', `Message exceeds ${MAX_MESSAGE_LEN} characters`));
       }
 
+      let mode = typeof body.mode === 'string' ? body.mode : null;
       let sessionId = typeof body.sessionId === 'string' ? body.sessionId : null;
       let session = sessionId ? getSession(db, sessionId) : null;
       if (!session) {
-        session = createSession(db);
+        session = createSession(db, mode || 'general');
         sessionId = session.id;
       }
 
@@ -83,7 +86,15 @@ export function makeRouter(db) {
         meta: null
       });
 
-      const { intent, payload } = classify(message);
+      let intent, payload;
+      if (mode && ['koen', 'enko', 'ko'].includes(mode)) {
+        intent = `dictionary.${mode}`;
+        payload = { text: message, word: message.trim() };
+      } else {
+        const classified = classify(message);
+        intent = classified.intent;
+        payload = classified.payload;
+      }
       const handler = getHandler(intent);
       let result;
       try {

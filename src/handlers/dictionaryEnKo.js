@@ -105,15 +105,15 @@ function formatResponse(items) {
 }
 
 export default {
-  name: 'dictionaryEn',
-  intent: 'dictionary.en',
+  name: 'dictionaryEnKo',
+  intent: 'dictionary.enko',
   patterns,
   async handle(payload, ctx) {
     const word = String(payload?.word || '').trim();
     if (!word) {
       return {
         content: NOT_FOUND_MSG(word),
-        meta: { word, source: 'naver.en', found: false }
+        meta: { word, source: 'naver.enko', found: false }
       };
     }
     const url = `https://en.dict.naver.com/api3/enko/search?query=${encodeURIComponent(word)}&range=word`;
@@ -130,16 +130,16 @@ export default {
       if (!res.ok || !Array.isArray(items) || items.length === 0) {
         return {
           content: NOT_FOUND_MSG(word),
-          meta: { word, source: 'naver.en', found: false }
+          meta: { word, source: 'naver.enko', found: false }
         };
       }
       const content = formatResponse(items);
       return {
         content,
-        meta: { word, source: 'naver.en', found: true, entryCount: Math.min(items.length, MAX_ENTRIES) }
+        meta: { word, source: 'naver.enko', found: true, entryCount: Math.min(items.length, MAX_ENTRIES) }
       };
     } catch (err) {
-      ctx.log?.('dictionaryEn fetch error', err?.code, err?.message);
+      ctx.log?.('dictionaryEnKo fetch error', err?.code, err?.message);
       return {
         content: NETWORK_MSG,
         meta: { word, error: true, code: err?.code || 'NETWORK_ERROR' }

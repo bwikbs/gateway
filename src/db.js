@@ -5,6 +5,7 @@ const SCHEMA = `
 CREATE TABLE IF NOT EXISTS sessions (
   id          TEXT PRIMARY KEY,
   title       TEXT NOT NULL DEFAULT 'New chat',
+  mode        TEXT NOT NULL DEFAULT 'general',
   created_at  INTEGER NOT NULL,
   updated_at  INTEGER NOT NULL
 );
@@ -27,27 +28,37 @@ export function openDb(path) {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA);
+  try {
+    db.exec(`ALTER TABLE sessions ADD COLUMN mode TEXT NOT NULL DEFAULT 'general'`);
+  } catch (err) {
+    // Ignore error if column already exists
+  }
   return db;
 }
 
-export function createSession(db) {
+export function createSession(db, mode = 'general') {
   const id = crypto.randomUUID();
   const now = Date.now();
   db.prepare(
-    `INSERT INTO sessions (id, title, created_at, updated_at) VALUES (?, 'New chat', ?, ?)`
-  ).run(id, now, now);
+    `INSERT INTO sessions (id, title, mode, created_at, updated_at) VALUES (?, 'New chat', ?, ?, ?)`
+  ).run(id, mode, now, now);
   return getSession(db, id);
 }
 
-export function listSessions(db) {
+export function listSessions(db, mode = null) {
+  if (mode && mode !== 'history') {
+    return db
+      .prepare(`SELECT id, title, mode, updated_at FROM sessions WHERE mode = ? ORDER BY updated_at DESC`)
+      .all(mode);
+  }
   return db
-    .prepare(`SELECT id, title, updated_at FROM sessions ORDER BY updated_at DESC`)
+    .prepare(`SELECT id, title, mode, updated_at FROM sessions ORDER BY updated_at DESC`)
     .all();
 }
 
 export function getSession(db, id) {
   return db
-    .prepare(`SELECT id, title, created_at, updated_at FROM sessions WHERE id = ?`)
+    .prepare(`SELECT id, title, mode, created_at, updated_at FROM sessions WHERE id = ?`)
     .get(id);
 }
 
