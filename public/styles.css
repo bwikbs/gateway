@@ -307,6 +307,27 @@ html, body { margin: 0; padding: 0; height: 100%; }
   line-height: 1.6;
 }
 
+.messages.result-mode .message.assistant.wide-layout {
+  max-width: min(1200px, 95%);
+}
+
+.dictionary-results-container.two-columns {
+  column-count: 2;
+  column-gap: 48px;
+  column-rule: 1px solid #e2e8f0;
+}
+
+.dictionary-results-container.two-columns .result-item {
+  break-inside: avoid;
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.dictionary-results-container.two-columns .result-item .result-divider {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .messages.result-mode {
     padding: 16px;

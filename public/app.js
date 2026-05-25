@@ -33,7 +33,7 @@ function formatDictionaryHtml(text) {
   // Split by entry separator
   const entries = text.split(/\n\n─────\n\n|\n─────\n/);
   
-  return entries.map(entry => {
+  const itemHtmls = entries.map((entry, index) => {
     const lines = entry.split('\n');
     let formattedLines = [];
     let isFirstLine = true;
@@ -67,8 +67,43 @@ function formatDictionaryHtml(text) {
       }
     }
     
-    return `<div class="result-entry">${formattedLines.join('')}</div>`;
-  }).join('<hr class="result-divider" />');
+    const dividerHtml = index < entries.length - 1 ? `<hr class="result-divider" />` : '';
+    return `
+      <div class="result-item">
+        <div class="result-entry">${formattedLines.join('')}</div>
+        ${dividerHtml}
+      </div>
+    `;
+  });
+  
+  return `<div class="dictionary-results-container">${itemHtmls.join('')}</div>`;
+}
+
+function adjustColumns() {
+  if (state.activeTab === 'history') {
+    return;
+  }
+  const assistantMsg = messagesEl.querySelector('.message.assistant');
+  if (!assistantMsg) return;
+
+  const container = assistantMsg.querySelector('.dictionary-results-container');
+  if (!container) return;
+
+  // Temporarily reset to single-column to measure natural layout
+  container.classList.remove('two-columns');
+  assistantMsg.classList.remove('wide-layout');
+
+  // Force synchronous layout calculation by reading layout properties
+  const scrollHeight = messagesEl.scrollHeight;
+  const clientHeight = messagesEl.clientHeight;
+
+  const hasOverflow = scrollHeight > clientHeight;
+  const hasWhitespace = window.innerWidth >= 1024;
+
+  if (hasOverflow && hasWhitespace) {
+    container.classList.add('two-columns');
+    assistantMsg.classList.add('wide-layout');
+  }
 }
 
 function scrollMessagesToBottom() {
@@ -169,6 +204,7 @@ function renderMessages(messages) {
     }
   }
   scrollMessagesToBottom();
+  adjustColumns();
 }
 
 function appendMessage(m) {
@@ -286,6 +322,7 @@ async function sendMessage(text) {
     renderSessions();
     const cur = state.sessions.find((s) => s.id === state.currentSessionId);
     chatHeaderEl.textContent = cur?.title || 'New chat';
+    adjustColumns();
   } catch (err) {
     console.error(err);
     if (state.activeTab !== 'history') {
@@ -295,6 +332,7 @@ async function sendMessage(text) {
       role: 'assistant',
       content: `오류: ${err.message || '요청이 실패했습니다.'}`
     });
+    adjustColumns();
   } finally {
     sendBtn.disabled = false;
     input.disabled = false;
@@ -398,6 +436,7 @@ function setupSidebar() {
       const collapsed = sidebarEl.classList.contains('collapsed');
       updateOverlay(collapsed);
     }
+    adjustColumns();
   });
 }
 
