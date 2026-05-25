@@ -27,6 +27,50 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
+function formatDictionaryHtml(text) {
+  if (!text) return '';
+  
+  // Split by entry separator
+  const entries = text.split(/\n\n─────\n\n|\n─────\n/);
+  
+  return entries.map(entry => {
+    const lines = entry.split('\n');
+    let formattedLines = [];
+    let isFirstLine = true;
+    
+    for (let line of lines) {
+      let trimmed = line.trim();
+      if (!trimmed) continue;
+      
+      if (isFirstLine) {
+        formattedLines.push(`<h2 class="result-headword">${escapeHtml(line)}</h2>`);
+        isFirstLine = false;
+        continue;
+      }
+      
+      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        formattedLines.push(`<div class="result-pos">${escapeHtml(trimmed)}</div>`);
+      } else if (trimmed.startsWith('— 출처:')) {
+        formattedLines.push(`<div class="result-source">${escapeHtml(trimmed)}</div>`);
+      } else if (trimmed.startsWith('동의어:')) {
+        formattedLines.push(`<div class="result-synonyms">${escapeHtml(trimmed)}</div>`);
+      } else if (trimmed.startsWith('예:') || trimmed.startsWith('   예:')) {
+        const cleanEx = trimmed.replace(/^\s*예:\s*/, '');
+        formattedLines.push(`<div class="result-example">예: ${escapeHtml(cleanEx)}</div>`);
+      } else if (trimmed.startsWith('→') || trimmed.startsWith('        →')) {
+        const cleanTrans = trimmed.replace(/^\s*→\s*/, '');
+        formattedLines.push(`<div class="result-translation">→ ${escapeHtml(cleanTrans)}</div>`);
+      } else if (/^\d+\./.test(trimmed)) {
+        formattedLines.push(`<div class="result-meaning">${escapeHtml(trimmed)}</div>`);
+      } else {
+        formattedLines.push(`<p class="result-text">${escapeHtml(line)}</p>`);
+      }
+    }
+    
+    return `<div class="result-entry">${formattedLines.join('')}</div>`;
+  }).join('<hr class="result-divider" />');
+}
+
 function scrollMessagesToBottom() {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
@@ -100,8 +144,29 @@ function renderSessions() {
 
 function renderMessages(messages) {
   messagesEl.innerHTML = '';
-  for (const m of messages) {
-    appendMessage(m);
+  if (state.activeTab !== 'history') {
+    messagesEl.classList.add('result-mode');
+    
+    // In dictionary mode, render only the latest assistant message
+    const lastAssistantMsg = [...messages].reverse().find(m => m.role === 'assistant');
+    if (lastAssistantMsg) {
+      appendMessage(lastAssistantMsg);
+    } else {
+      let modeName = '한영';
+      if (state.activeTab === 'enko') modeName = '영한';
+      else if (state.activeTab === 'ko') modeName = '국어';
+      messagesEl.innerHTML = `
+        <div class="search-placeholder">
+          <div class="placeholder-icon">🔍</div>
+          <div class="placeholder-text">${escapeHtml(modeName)} 사전에 검색할 단어를 입력하세요.</div>
+        </div>
+      `;
+    }
+  } else {
+    messagesEl.classList.remove('result-mode');
+    for (const m of messages) {
+      appendMessage(m);
+    }
   }
   scrollMessagesToBottom();
 }
@@ -109,7 +174,11 @@ function renderMessages(messages) {
 function appendMessage(m) {
   const div = document.createElement('div');
   div.className = `message ${m.role}`;
-  div.innerHTML = escapeHtml(m.content);
+  if (state.activeTab !== 'history' && m.role === 'assistant') {
+    div.innerHTML = formatDictionaryHtml(m.content);
+  } else {
+    div.innerHTML = escapeHtml(m.content);
+  }
   messagesEl.appendChild(div);
   scrollMessagesToBottom();
   return div;
@@ -153,8 +222,24 @@ async function sendMessage(text) {
   const trimmed = text.trim();
   if (!trimmed) return;
 
-  // Optimistic user bubble.
-  const optimistic = appendMessage({ role: 'user', content: text });
+  // Auto-collapse sidebar on search (on mobile/tablet)
+  if (window.innerWidth <= 768) {
+    closeSidebar();
+  }
+
+  // Optimistic user bubble (only in history mode) or spinner loading indicator (in dictionary mode)
+  let optimistic = null;
+  if (state.activeTab === 'history') {
+    optimistic = appendMessage({ role: 'user', content: text });
+  } else {
+    messagesEl.innerHTML = `
+      <div class="search-loading">
+        <div class="spinner"></div>
+        <div class="loading-text">'${escapeHtml(trimmed)}' 검색 중...</div>
+      </div>
+    `;
+  }
+  
   sendBtn.disabled = true;
   input.disabled = true;
 
@@ -174,13 +259,20 @@ async function sendMessage(text) {
       })
     });
 
-    // Replace optimistic bubble with server-confirmed user message.
-    if (optimistic && resp.userMessage) {
-      optimistic.innerHTML = escapeHtml(resp.userMessage.content);
-    }
+    if (state.activeTab !== 'history') {
+      messagesEl.innerHTML = '';
+      if (resp.assistantMessage) {
+        appendMessage(resp.assistantMessage);
+      }
+    } else {
+      // Replace optimistic bubble with server-confirmed user message.
+      if (optimistic && resp.userMessage) {
+        optimistic.innerHTML = escapeHtml(resp.userMessage.content);
+      }
 
-    if (resp.assistantMessage) {
-      appendMessage(resp.assistantMessage);
+      if (resp.assistantMessage) {
+        appendMessage(resp.assistantMessage);
+      }
     }
 
     // If this was a new session, update state.
@@ -196,6 +288,9 @@ async function sendMessage(text) {
     chatHeaderEl.textContent = cur?.title || 'New chat';
   } catch (err) {
     console.error(err);
+    if (state.activeTab !== 'history') {
+      messagesEl.innerHTML = '';
+    }
     appendMessage({
       role: 'assistant',
       content: `오류: ${err.message || '요청이 실패했습니다.'}`
@@ -226,6 +321,20 @@ newChatBtn.addEventListener('click', () => {
   createNewSession().catch((err) => console.error(err));
 });
 
+function closeSidebar() {
+  sidebarEl.classList.add('collapsed');
+  localStorage.setItem('sidebar-collapsed', 'true');
+  sidebarOverlayEl.classList.remove('active');
+}
+
+function updateOverlay(collapsed) {
+  if (window.innerWidth <= 768 && !collapsed) {
+    sidebarOverlayEl.classList.add('active');
+  } else {
+    sidebarOverlayEl.classList.remove('active');
+  }
+}
+
 function setupTabs() {
   const tabBtns = document.querySelectorAll('.tab-btn');
   tabBtns.forEach(btn => {
@@ -254,7 +363,7 @@ function setupTabs() {
       } else {
         state.currentSessionId = null;
         chatHeaderEl.textContent = 'New chat';
-        messagesEl.innerHTML = '';
+        renderMessages([]);
       }
     });
   });
@@ -270,14 +379,6 @@ function setupSidebar() {
     sidebarEl.classList.add('collapsed');
   }
 
-  function updateOverlay(collapsed) {
-    if (window.innerWidth <= 768 && !collapsed) {
-      sidebarOverlayEl.classList.add('active');
-    } else {
-      sidebarOverlayEl.classList.remove('active');
-    }
-  }
-
   updateOverlay(isCollapsed);
 
   toggleSidebarBtn.addEventListener('click', () => {
@@ -287,9 +388,7 @@ function setupSidebar() {
   });
 
   sidebarOverlayEl.addEventListener('click', () => {
-    sidebarEl.classList.add('collapsed');
-    localStorage.setItem('sidebar-collapsed', 'true');
-    updateOverlay(true);
+    closeSidebar();
   });
 
   window.addEventListener('resize', () => {
@@ -312,6 +411,7 @@ async function init() {
     await selectSession(state.sessions[0].id);
   } else {
     chatHeaderEl.textContent = 'New chat';
+    renderMessages([]);
   }
 }
 

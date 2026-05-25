@@ -287,3 +287,162 @@ html, body { margin: 0; padding: 0; height: 100%; }
   }
 }
 
+/* Result Mode for Messages Container */
+.messages.result-mode {
+  padding: 40px;
+  background: #fcfcfd;
+}
+
+.messages.result-mode .message.assistant {
+  align-self: center;
+  width: 100%;
+  max-width: 800px;
+  background: #fff;
+  border: 1px solid #eef0f2;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 28px 32px;
+  color: #2d3748;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .messages.result-mode {
+    padding: 16px;
+  }
+  .messages.result-mode .message.assistant {
+    padding: 20px;
+    font-size: 15px;
+  }
+}
+
+/* Dictionary Result Styling */
+.result-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.result-headword {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 4px 0;
+  border-bottom: 2px solid #10a37f;
+  padding-bottom: 8px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.result-pos {
+  display: inline-block;
+  background: #eefaf6;
+  color: #10a37f;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  width: fit-content;
+  margin-bottom: 4px;
+}
+
+.result-meaning {
+  font-size: 16px;
+  font-weight: 500;
+  color: #2d3748;
+  margin-top: 4px;
+}
+
+.result-example {
+  font-size: 14px;
+  color: #718096;
+  background: #f7f9fa;
+  padding: 6px 12px;
+  border-left: 3px solid #cbd5e0;
+  margin-left: 12px;
+  border-radius: 0 4px 4px 0;
+}
+
+.result-translation {
+  font-size: 14px;
+  color: #4a5568;
+  margin-left: 24px;
+}
+
+.result-synonyms {
+  font-size: 14px;
+  color: #4a5568;
+  background: #f0f4f8;
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.result-source {
+  font-size: 12px;
+  color: #a0aec0;
+  text-align: right;
+  margin-top: 12px;
+}
+
+.result-divider {
+  border: 0;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 24px 0;
+}
+
+/* Spinner and Search placeholders */
+.search-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #a0aec0;
+  text-align: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.placeholder-icon {
+  font-size: 48px;
+}
+
+.placeholder-text {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.search-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  flex: 1;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(16, 163, 127, 0.1);
+  border-top-color: #10a37f;
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+}
+
+.loading-text {
+  font-size: 16px;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
