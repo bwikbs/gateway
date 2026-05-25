@@ -271,9 +271,37 @@ function setupSidebar() {
   });
 }
 
+function initFullscreenMobile() {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (!isMobile) return;
+
+  const enterFullscreen = () => {
+    const doc = document.documentElement;
+    const requestMethod = doc.requestFullscreen || 
+                          doc.webkitRequestFullscreen || 
+                          doc.mozRequestFullScreen || 
+                          doc.msRequestFullscreen;
+    
+    if (requestMethod) {
+      requestMethod.call(doc)
+        .catch(err => {
+          console.warn("Fullscreen request failed:", err);
+        });
+    }
+    
+    // Clean up listeners once triggered
+    document.removeEventListener('click', enterFullscreen);
+    document.removeEventListener('touchstart', enterFullscreen);
+  };
+
+  document.addEventListener('click', enterFullscreen);
+  document.addEventListener('touchstart', enterFullscreen);
+}
+
 async function init() {
   setupSidebar();
   setupTabs();
+  initFullscreenMobile();
   newChatBtn.textContent = '+ 새 한영사전 검색';
   
   await loadSessions();
